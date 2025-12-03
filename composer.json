@@ -3,14 +3,33 @@
   "description": "Nepali (BS) ↔ English (AD) Date Converter for Laravel — by Jeeven Lamichhane.",
   "type": "library",
   "license": "MIT",
+  "keywords": [
+    "jeeven",
+    "laravel",
+    "nepali-date",
+    "date-converter",
+    "english",
+    "nepali",
+    "bikramsambat",
+    "adtobs"
+  ],
+  "authors": [
+    {
+      "name": "Jeeven Lamichhane",
+      "email": "lamichhaneaj@gmail.com",
+      "homepage": "https://jeevenlamichhane.com.np",
+      "role": "Developer"
+    }
+  ],
+  "homepage": "https://github.com/MacAlistair1/Nepali-Date-Converter",
   "autoload": {
     "psr-4": {
       "Jeeven\\NepaliDateConverter\\": "src/"
     }
   },
   "require": {
-        "php": ">=8.0"
-    },
+    "php": ">=8.0"
+  },
   "extra": {
     "laravel": {
       "providers": [
@@ -20,5 +39,7 @@
         "NepaliDate": "Jeeven\\NepaliDateConverter\\Facades\\NepaliDate"
       }
     }
-  }
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true
 }
