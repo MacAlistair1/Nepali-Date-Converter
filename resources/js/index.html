@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nepali Date Converter</title>
+    <link
+      rel="icon"
+      href="https://jeevenlamichhane.com.np/storage/images/company/logos/modified/photo-20200716181443-qKieV2/crop/50x50.png"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #e0f7fa, #f4f4f9);
+        margin: 0;
+        padding: 30px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+      }
+
+      h1 {
+        color: #00796b;
+        margin-bottom: 10px;
+        font-size: 2rem;
+        text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
+      }
+
+      #todayDisplay {
+        font-weight: 600;
+        margin-bottom: 30px;
+        color: #004d40;
+        font-size: 1.1rem;
+      }
+
+      .converter-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 25px;
+        justify-content: center;
+        width: 100%;
+        max-width: 1000px;
+      }
+
+      .converter-card {
+        background-color: #fff;
+        padding: 25px 20px;
+        border-radius: 15px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+        width: 420px;
+        transition: transform 0.3s, box-shadow 0.3s;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .converter-card::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: rgba(0, 121, 107, 0.05);
+        transform: rotate(25deg);
+        pointer-events: none;
+      }
+
+      .converter-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
+      }
+
+      .converter-card h3 {
+        margin-top: 0;
+        color: #004d40;
+        margin-bottom: 15px;
+        text-align: center;
+        font-size: 1.3rem;
+      }
+
+      input {
+        width: 100%;
+        padding: 12px 15px;
+        font-size: 16px;
+        border-radius: 8px;
+        border: 1px solid #b2dfdb;
+        margin-bottom: 12px;
+        box-sizing: border-box;
+        transition: border-color 0.3s, box-shadow 0.3s;
+      }
+
+      input:focus {
+        border-color: #00796b;
+        box-shadow: 0 0 5px rgba(0, 121, 107, 0.3);
+        outline: none;
+      }
+
+      .result {
+        padding: 12px;
+        border-radius: 8px;
+        min-height: 40px;
+        font-weight: 600;
+        text-align: center;
+        line-height: 1.5;
+        white-space: pre-line;
+        transition: all 0.3s;
+      }
+
+      .result.success {
+        background-color: #e0f2f1;
+        color: #004d40;
+      }
+
+      .result.error {
+        background-color: #ffebee;
+        color: #c62828;
+      }
+
+      .diff-future {
+        color: green;
+        font-weight: bold;
+      }
+      .diff-past {
+        color: red;
+        font-weight: bold;
+      }
+      .diff-today {
+        color: orange;
+        font-weight: bold;
+      }
+
+      @media (max-width: 768px) {
+        .converter-card {
+          width: 90%;
+        }
+      }
+
+      .code-snippet {
+        background-color: #263238;
+        color: #cfd8dc;
+        padding: 12px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        overflow-x: auto;
+        margin-top: 10px;
+      }
+
+      .code-snippet code {
+        display: block;
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <h1><i class="fas fa-calendar-alt"></i> Nepali Date Converter</h1>
+    <div id="todayDisplay"></div>
+
+    <div class="converter-container">
+      <!-- AD → BS -->
+      <div class="converter-card">
+        <h3><i class="fas fa-arrow-right"></i> AD → BS</h3>
+        <input type="text" id="adInput" placeholder="YYYY-MM-DD or YYYYMMDD" />
+        <div class="result" id="adToBsResult"></div>
+      </div>
+
+      <!-- BS → AD -->
+      <div class="converter-card">
+        <h3><i class="fas fa-arrow-left"></i> BS → AD</h3>
+        <input type="text" id="bsInput" placeholder="YYYY-MM-DD or YYYYMMDD" />
+        <div class="result" id="bsToAdResult"></div>
+      </div>
+
+      <!-- Validate AD -->
+      <div class="converter-card">
+        <h3><i class="fas fa-check-circle"></i> Validate AD</h3>
+        <input
+          type="text"
+          id="adValidateInput"
+          placeholder="YYYY-MM-DD or YYYYMMDD"
+        />
+        <div class="result" id="adValidateResult"></div>
+      </div>
+
+      <!-- Validate BS -->
+      <div class="converter-card">
+        <h3><i class="fas fa-check-circle"></i> Validate BS</h3>
+        <input
+          type="text"
+          id="bsValidateInput"
+          placeholder="YYYY-MM-DD or YYYYMMDD"
+        />
+        <div class="result" id="bsValidateResult"></div>
+      </div>
+    </div>
+
+    <!-- Single Code Snippet Card -->
+    <div
+      class="converter-card"
+      style="width: 90%; max-width: 950px; margin-top: 30px"
+    >
+      <h3><i class="fas fa-code"></i> Code Snippet</h3>
+      <pre class="code-snippet"><code id="singleSnippet"></code></pre>
+    </div>
+
+    <script type="module" src="./Sample.js"></script>
+    <script type="module">
+      import { bsData } from "./bsCalendarData.js";
+      import {
+        bsToAd,
+        adToBs,
+        isValidBSDate,
+        isValidADDate,
+        totalDaysSince1970,
+      } from "./nepaliDateConverter.js";
+
+      // --------------------------
+      // Show today's date
+      // --------------------------
+      const today = new Date();
+      const todayADStr = today.toISOString().slice(0, 10);
+      const todayBSStr = adToBs(todayADStr);
+      document.getElementById(
+        "todayDisplay"
+      ).textContent = `Today → AD: ${todayADStr} (${getDayName(
+        todayADStr
+      )}) | BS: ${todayBSStr}`;
+
+      // --------------------------
+      // Helpers
+      // --------------------------
+      function formatInputYYYYMMDD(value) {
+        value = value.replace(/\D/g, "");
+        if (value.length >= 4)
+          value =
+            value.slice(0, 4) + (value.length >= 5 ? "-" : "") + value.slice(4);
+        if (value.length >= 7)
+          value =
+            value.slice(0, 7) +
+            (value.length >= 8 ? "-" : "") +
+            value.slice(7, 9);
+        return value;
+      }
+
+      function getDayName(adDateStr) {
+        const days = [
+          "Sunday",
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+        ];
+        const [y, m, d] = adDateStr.split("-").map(Number);
+        const dateObj = new Date(y, m - 1, d);
+        return days[dateObj.getDay()];
+      }
+
+      function showResult(el, text, diffDays = null, isError = false) {
+        el.classList.toggle("error", isError);
+        if (diffDays !== null) {
+          let diffClass = "diff-today";
+          let icon = "🌞";
+          if (diffDays > 0) {
+            diffClass = "diff-future";
+            icon = "⏳";
+          } else if (diffDays < 0) {
+            diffClass = "diff-past";
+            icon = "⏰";
+          }
+          el.innerHTML = `${text}\nDays from today: <span class="${diffClass}">${icon} ${diffDays}</span>`;
+        } else {
+          el.textContent = text;
+        }
+      }
+
+      function getADInfo(adDateStr) {
+        const [y, m, d] = adDateStr.split("-").map(Number);
+        if (!isValidADDate(adDateStr)) return null;
+        const bsDate = adToBs(adDateStr);
+        const [bsY, bsM, bsD] = bsDate.split("-").map(Number);
+        const totalDays = bsData[bsY][12];
+        const dayOfYear =
+          totalDaysSince1970(bsY, bsM, bsD) - totalDaysSince1970(bsY, 1, 1) + 1;
+        const diffDays =
+          totalDaysSince1970(bsY, bsM, bsD) -
+          totalDaysSince1970(...todayBSStr.split("-").map(Number));
+        const dayName = getDayName(adDateStr);
+        return {
+          adDate: adDateStr,
+          bsDate,
+          totalDays,
+          dayOfYear,
+          diffDays,
+          dayName,
+        };
+      }
+
+      function getBSInfo(bsDateStr) {
+        const [y, m, d] = bsDateStr.split("-").map(Number);
+        if (!isValidBSDate(bsDateStr)) return null;
+        const totalDays = bsData[y][12];
+        const dayOfYear =
+          totalDaysSince1970(y, m, d) - totalDaysSince1970(y, 1, 1) + 1;
+        const diffDays =
+          totalDaysSince1970(y, m, d) -
+          totalDaysSince1970(...todayBSStr.split("-").map(Number));
+        const adDate = bsToAd(bsDateStr);
+        const dayName = getDayName(adDate);
+        return {
+          bsDate: bsDateStr,
+          adDate,
+          totalDays,
+          dayOfYear,
+          diffDays,
+          dayName,
+        };
+      }
+
+      // --------------------------
+      // Event listeners
+      // --------------------------
+      const adInput = document.getElementById("adInput");
+      const adResultEl = document.getElementById("adToBsResult");
+      adInput.addEventListener("input", () => {
+        let adDate = formatInputYYYYMMDD(adInput.value);
+        adInput.value = adDate;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(adDate)) {
+          showResult(adResultEl, "Format must be YYYY-MM-DD", null, true);
+          return;
+        }
+        if (!isValidADDate(adDate)) {
+          showResult(adResultEl, "Invalid AD date!", null, true);
+          return;
+        }
+        const info = getADInfo(adDate);
+        showResult(
+          adResultEl,
+          `BS Date: ${info.bsDate}\nDay of Week: ${info.dayName}\nDay of Year: ${info.dayOfYear}\nTotal Days in Year: ${info.totalDays}`,
+          info.diffDays
+        );
+
+        updateSingleSnippet(info, "adToBs");
+      });
+
+      const bsInput = document.getElementById("bsInput");
+      const bsResultEl = document.getElementById("bsToAdResult");
+      bsInput.addEventListener("input", () => {
+        let bsDate = formatInputYYYYMMDD(bsInput.value);
+        bsInput.value = bsDate;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(bsDate)) {
+          showResult(bsResultEl, "Format must be YYYY-MM-DD", null, true);
+          return;
+        }
+        if (!isValidBSDate(bsDate)) {
+          showResult(bsResultEl, "Invalid BS date!", null, true);
+          return;
+        }
+        const info = getBSInfo(bsDate);
+        showResult(
+          bsResultEl,
+          `AD Date: ${info.adDate}\nDay of Week: ${info.dayName}\nDay of Year: ${info.dayOfYear}\nTotal Days in Year: ${info.totalDays}`,
+          info.diffDays
+        );
+
+        updateSingleSnippet(info, "bsToAd");
+      });
+
+      const adValidateInput = document.getElementById("adValidateInput");
+      const adValidateResult = document.getElementById("adValidateResult");
+      adValidateInput.addEventListener("input", () => {
+        let adDate = formatInputYYYYMMDD(adValidateInput.value);
+        adValidateInput.value = adDate;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(adDate)) {
+          showResult(adValidateResult, "Format must be YYYY-MM-DD", null, true);
+          return;
+        }
+        const info = getADInfo(adDate);
+        if (!info) {
+          showResult(adValidateResult, "Invalid AD date!", null, true);
+          return;
+        }
+        showResult(
+          adValidateResult,
+          `AD: ${info.adDate} (${info.dayName})\nBS: ${info.bsDate}\nDay of Year: ${info.dayOfYear}\nTotal Days in Year: ${info.totalDays}`,
+          info.diffDays
+        );
+
+        updateSingleSnippet(info, "adValidate");
+      });
+
+      const bsValidateInput = document.getElementById("bsValidateInput");
+      const bsValidateResult = document.getElementById("bsValidateResult");
+      bsValidateInput.addEventListener("input", () => {
+        let bsDate = formatInputYYYYMMDD(bsValidateInput.value);
+        bsValidateInput.value = bsDate;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(bsDate)) {
+          showResult(bsValidateResult, "Format must be YYYY-MM-DD", null, true);
+          return;
+        }
+        const info = getBSInfo(bsDate);
+        if (!info) {
+          showResult(bsValidateResult, "Invalid BS date!", null, true);
+          return;
+        }
+        showResult(
+          bsValidateResult,
+          `BS: ${info.bsDate}\nAD: ${info.adDate} (${info.dayName})\nDay of Year: ${info.dayOfYear}\nTotal Days in Year: ${info.totalDays}`,
+          info.diffDays
+        );
+        updateSingleSnippet(info, "bsValidate");
+      });
+    </script>
+
+    <script>
+      const singleSnippet = document.getElementById("singleSnippet");
+
+      // Helper to update single snippet dynamically
+      function updateSingleSnippet(info, type) {
+        let snippetText = "";
+        if (!info) {
+          snippetText = "// Invalid date";
+        } else {
+          switch (type) {
+            case "adToBs":
+              snippetText = `// AD → BS conversion example
+import { adToBs } from "./nepaliDateConverter.js";
+
+const adDate = "${info.adDate}";
+const bsDate = adToBs(adDate);
+
+console.log("AD Date:", adDate);
+console.log("Converted BS Date:", bsDate);
+`;
+              break;
+
+            case "bsToAd":
+              snippetText = `// BS → AD conversion example
+import { bsToAd } from "./nepaliDateConverter.js";
+
+const bsDate = "${info.bsDate}";
+const adDate = bsToAd(bsDate, "YYYY-MM-DD");
+
+console.log("BS Date:", bsDate);
+console.log("Converted AD Date:", adDate);
+`;
+              break;
+
+            case "adValidate":
+              snippetText = `// AD validation example
+import { isValidADDate, adToBs } from "./nepaliDateConverter.js";
+
+const adDate = "${info.adDate}";
+const isValid = isValidADDate(adDate);
+
+if (isValid) {
+  const bsDate = adToBs(adDate);
+  const dayOfYear = ${info.dayOfYear};
+  const totalDays = ${info.totalDays};
+  console.log("AD Date:", adDate);
+  console.log("BS Date:", bsDate);
+  console.log("Day of Year:", dayOfYear);
+  console.log("Total Days in BS Year:", totalDays);
+} else {
+  console.log("Invalid AD Date!");
+}
+`;
+              break;
+
+            case "bsValidate":
+              snippetText = `// BS validation example
+import { isValidBSDate, bsToAd } from "./nepaliDateConverter.js";
+
+const bsDate = "${info.bsDate}";
+const isValid = isValidBSDate(bsDate);
+
+if (isValid) {
+  const adDate = bsToAd(bsDate, "YYYY-MM-DD");
+  const dayOfYear = ${info.dayOfYear};
+  const totalDays = ${info.totalDays};
+  console.log("BS Date:", bsDate);
+  console.log("AD Date:", adDate);
+  console.log("Day of Year:", dayOfYear);
+  console.log("Total Days in BS Year:", totalDays);
+} else {
+  console.log("Invalid BS Date!");
+}
+`;
+              break;
+          }
+        }
+        singleSnippet.textContent = snippetText;
+      }
+    </script>
+  </body>
+</html>
