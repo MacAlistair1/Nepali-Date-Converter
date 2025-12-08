@@ -58,4 +58,24 @@ class Helpers
     {
         return self::converter()->formattedEnglishDate($date, $format, $locale);
     }
+
+    public static function today(string $locale = 'en', string $format = 'Y-m-d'): string
+    {
+        return self::converter()->today($locale, $format);
+    }
+
+    public static function diff(string $date1, string $date2, string $dateType = 'en', ?string $returnIn = null): string
+    {
+        return self::converter()->diff($date1, $date2, $dateType, $returnIn);
+    }
+
+    public static function humanDiff(string $date1, string $date2, string $dateType = 'en', string $locale = 'en'): string
+    {
+        return self::converter()->diff($date1, $date2, $dateType, $locale);
+    }
+
+    public static function toNepaliDigits($number): string
+    {
+        return self::converter()->toNepaliDigits($number);
+    }
 }

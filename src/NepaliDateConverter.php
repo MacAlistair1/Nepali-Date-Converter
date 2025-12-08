@@ -3,6 +3,7 @@
 namespace Jeeven\NepaliDateConverter;
 
 use DateTime;
+use InvalidArgumentException;
 
 /**
  * NepaliDateConverter.php
@@ -398,5 +399,139 @@ class NepaliDateConverter
         ];
 
         return strtr($format, $replacementsNep);
+    }
+
+    /**
+     * Get today's date formatted in Nepali or English based on the locale.
+     *
+     * @param string $format  Format string, e.g., 'Y-m-d' or 'd M, Y, l'
+     * @param string $locale  'en' or 'np'. Default is 'en'.
+     * @return string
+     */
+    public static function today(string $locale = 'en', string $format = 'Y-m-d'): string
+    {
+        // Get today's date in BS (Nepali Calendar) format
+        $bsDate = self::adToBs(date('Y-m-d')); // Convert today's AD date to BS date
+
+        if ($locale == 'np') {
+            // Use the formattedNepaliDate function to return the formatted date
+            return self::formattedNepaliDate($bsDate, $format, $locale);
+        }
+        return self::formattedEnglishDate(date('Y-m-d'), $format, $locale);
+    }
+
+    /**
+     * Get difference between two dates in requested units.
+     *
+     * @param string      $date1      First date
+     * @param string      $date2      Second date
+     * @param string      $dateType   'en' (AD) or 'np' (BS)
+     * @param string|null $returnIn   days|years|months|hours|minutes|seconds|null (return all)
+     * @return mixed
+     * @throws InvalidArgumentException
+     */
+    public static function diff(string $date1, string $date2, string $dateType = 'en', ?string $returnIn = null)
+    {
+        // 1️⃣ Normalize input dates
+        $date1 = self::normalize($date1, $dateType);
+        $date2 = self::normalize($date2, $dateType);
+
+        // 2️⃣ Convert BS → AD if needed
+        if ($dateType === 'np') {
+            $date1 = self::bsToAd($date1);
+            $date2 = self::bsToAd($date2);
+        }
+
+        // Validate AD format after conversion
+        $dt1 = DateTime::createFromFormat('Y-m-d', $date1);
+        $dt2 = DateTime::createFromFormat('Y-m-d', $date2);
+
+        if (!$dt1 || !$dt2) {
+            throw new InvalidArgumentException("Invalid date(s): $date1 or $date2");
+        }
+
+        // 3️⃣ Calculate difference
+        $interval = $dt1->diff($dt2);
+
+        // 4️⃣ Build all-unit returned array
+        $result = [
+            'years'   => (int) $interval->y,
+            'months'  => (int) $interval->m,
+            'days'    => (int) $interval->days,
+            'hours'   => abs($dt1->getTimestamp() - $dt2->getTimestamp()) / 3600,
+            'minutes' => abs($dt1->getTimestamp() - $dt2->getTimestamp()) / 60,
+            'seconds' => abs($dt1->getTimestamp() - $dt2->getTimestamp()),
+        ];
+
+        // 5️⃣ If user requested only 1 unit → return only that
+        if ($returnIn && isset($result[$returnIn])) {
+            return $result[$returnIn];
+        }
+
+        // 6️⃣ Return all units
+        return $result;
+    }
+
+    /**
+     * Human-readable difference between two dates.
+     *
+     * @param string $date1
+     * @param string $date2
+     * @param string $dateType 'en' (AD) or 'np' (BS)
+     * @param string $locale   'en' or 'np'
+     * @return string
+     */
+    public static function humanDiff(string $date1, string $date2, string $dateType = 'en', string $locale = 'en'): string
+    {
+        // Get full diff result
+        $diff = self::diff($date1, $date2, $dateType);
+
+        // Extract main components
+        $years  = $diff['years'];
+        $months = $diff['months'] % 12;   // months without converting years
+        $days   = $diff['days'] - ($diff['years'] * 365) - ($months * 30);
+        if ($days < 0) $days = 0; // safe fallback
+
+        // English labels
+        $labelsEn = [
+            'year'  => 'year',
+            'month' => 'month',
+            'day'   => 'day',
+        ];
+
+        // Nepali labels
+        $labelsNp = [
+            'year'  => 'वर्ष',
+            'month' => 'महिना',
+            'day'   => 'दिन',
+        ];
+
+        // Choose labels
+        $L = ($locale === 'np') ? $labelsNp : $labelsEn;
+
+        // Convert digits to Nepali if required
+        $convert = fn($num) => $locale === 'np'
+            ? self::toNepaliDigits($num)
+            : $num;
+
+        $parts = [];
+
+        if ($years > 0)
+            $parts[] = $convert($years) . ' ' . $L['year'] . ($locale === 'en' && $years > 1 ? 's' : '');
+
+        if ($months > 0)
+            $parts[] = $convert($months) . ' ' . $L['month'] . ($locale === 'en' && $months > 1 ? 's' : '');
+
+        if ($days > 0 || empty($parts))
+            $parts[] = $convert($days) . ' ' . $L['day'] . ($locale === 'en' && $days > 1 ? 's' : '');
+
+        return implode(', ', $parts);
+    }
+
+    public static function toNepaliDigits($number): string
+    {
+        $digits = BsCalendar::nepaliDigits();
+
+        return implode('', array_map(fn($d) => $digits[$d], str_split((string) $number)));
     }
 }
