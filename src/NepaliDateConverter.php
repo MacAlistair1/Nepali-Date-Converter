@@ -120,42 +120,67 @@ class NepaliDateConverter
     // -------------------
     public static function adToBs(string $adDate, bool $asObject = false): mixed
     {
+        // Normalize and create a DateTime object for the input AD date
         [$ay, $am, $ad] = array_map('intval', explode('-', self::normalize($adDate)));
-        $adDateObj = new DateTime("$ay-$am-$ad");
+        $adDateObj = new DateTime(sprintf("%04d-%02d-%02d", $ay, $am, $ad));
 
-        $refTotal = self::totalDaysSince1970(self::$refBS['year'], self::$refBS['month'], self::$refBS['day']);
-        $refAdTotal = intval(self::$refAD->format('U') / 86400);
-        $targetAdTotal = intval($adDateObj->format('U') / 86400);
-        $diff = $targetAdTotal - $refAdTotal;
+        // --- 2. CALCULATE DAY DIFFERENCE (FIXED WITH DateTime::diff) ---
+        // Use DateTime::diff() for accurate, timezone-agnostic day count
+        $dateInterval = self::$refAD->diff($adDateObj);
 
+        // Check if the target date is before the reference date
+        $isBackward = $adDateObj < self::$refAD;
+
+
+        // Get the absolute number of days and apply the correct sign
+        $diff = $dateInterval->days;
+        if ($isBackward) {
+            $diff = -$diff;
+        }
+        // --- 3. INITIALIZE BS DATE ---
         $bsYear = self::$refBS['year'];
         $bsMonth = self::$refBS['month'];
         $bsDay = self::$refBS['day'];
 
+        // The rest of the while loop logic is correct for iteration:
         while ($diff !== 0) {
-            $monthDays = self::$bsData[$bsYear][$bsMonth - 1];
             if ($diff > 0) {
+                // Forward conversion (target date is AFTER the ref date)
+                $monthDays = self::$bsData[$bsYear][$bsMonth - 1]; // Days in current BS month
+
                 $bsDay++;
+                $diff--; // Consume one day from the difference
+
                 if ($bsDay > $monthDays) {
+                    // Day overflow, move to the next month
                     $bsDay = 1;
                     $bsMonth++;
+
                     if ($bsMonth > 12) {
+                        // Month overflow, move to the next year
                         $bsMonth = 1;
                         $bsYear++;
                     }
                 }
-                $diff--;
             } else {
+                // Backward conversion (target date is BEFORE the ref date)
+
                 $bsDay--;
+                $diff++; // Consume one day from the difference (move diff closer to zero)
+
                 if ($bsDay < 1) {
+                    // Day underflow, move to the previous month
                     $bsMonth--;
+
                     if ($bsMonth < 1) {
+                        // Month underflow, move to the previous year
                         $bsMonth = 12;
                         $bsYear--;
                     }
+
+                    // Set day to the last day of the new (previous) month
                     $bsDay = self::$bsData[$bsYear][$bsMonth - 1];
                 }
-                $diff++;
             }
         }
 
@@ -165,7 +190,7 @@ class NepaliDateConverter
             return new BsDate($bsDateStr);
         }
 
-        return $bsDateStr; // legacy behavior
+        return $bsDateStr;
     }
 
     // -------------------
@@ -301,7 +326,7 @@ class NepaliDateConverter
 
         // Validate BS date
         if (!self::isValidBSDate($bsDate)) {
-            throw new \InvalidArgumentException("Invalid BS date: $bsDate");
+            throw new InvalidArgumentException("Invalid BS date: $bsDate");
         }
 
         [$y, $m, $d] = explode('-', $bsDate);
@@ -354,7 +379,7 @@ class NepaliDateConverter
 
         // Validate AD date
         if (!self::isValidADDate($adDate)) {
-            throw new \InvalidArgumentException("Invalid AD date: $adDate");
+            throw new InvalidArgumentException("Invalid AD date: $adDate");
         }
 
         if ($locale === 'en') {
@@ -455,10 +480,10 @@ class NepaliDateConverter
 
         // 4️⃣ Build all-unit returned array
         $result = [
-            'years'   => (int) $interval->y,
-            'months'  => (int) $interval->m,
-            'days'    => (int) $interval->days,
-            'hours'   => abs($dt1->getTimestamp() - $dt2->getTimestamp()) / 3600,
+            'years' => (int) $interval->y,
+            'months' => (int) $interval->m,
+            'days' => (int) $interval->days,
+            'hours' => abs($dt1->getTimestamp() - $dt2->getTimestamp()) / 3600,
             'minutes' => abs($dt1->getTimestamp() - $dt2->getTimestamp()) / 60,
             'seconds' => abs($dt1->getTimestamp() - $dt2->getTimestamp()),
         ];
@@ -487,23 +512,24 @@ class NepaliDateConverter
         $diff = self::diff($date1, $date2, $dateType);
 
         // Extract main components
-        $years  = $diff['years'];
+        $years = $diff['years'];
         $months = $diff['months'] % 12;   // months without converting years
-        $days   = $diff['days'] - ($diff['years'] * 365) - ($months * 30);
-        if ($days < 0) $days = 0; // safe fallback
+        $days = $diff['days'] - ($diff['years'] * 365) - ($months * 30);
+        if ($days < 0)
+            $days = 0; // safe fallback
 
         // English labels
         $labelsEn = [
-            'year'  => 'year',
+            'year' => 'year',
             'month' => 'month',
-            'day'   => 'day',
+            'day' => 'day',
         ];
 
         // Nepali labels
         $labelsNp = [
-            'year'  => 'वर्ष',
+            'year' => 'वर्ष',
             'month' => 'महिना',
-            'day'   => 'दिन',
+            'day' => 'दिन',
         ];
 
         // Choose labels
